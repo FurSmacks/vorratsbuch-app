@@ -1,0 +1,1134 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vorratsbuch – Kühlschrank · TK · Trockenlager</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F2F4F5;
+    --paper-raised:#FFFFFF;
+    --ink:#20262B;
+    --ink-soft:#5B6670;
+    --line:#D9DEE1;
+
+    --kuehl:#2E6E8E;
+    --kuehl-tint:#E4EFF4;
+    --tk:#3E5C77;
+    --tk-tint:#E6EEF5;
+    --trocken:#8C6A3F;
+    --trocken-tint:#F3ECDF;
+
+    --good:#4C7A5B;
+    --bad:#B5503C;
+
+    --radius:10px;
+    --font-display:'Space Grotesk', sans-serif;
+    --font-body:'Inter', sans-serif;
+    --font-mono:'IBM Plex Mono', monospace;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:var(--font-body);
+    line-height:1.45;
+    padding-bottom:60px;
+  }
+  a{color:inherit;}
+
+  /* ---------- Kopfbereich ---------- */
+  header.top{
+    background:var(--paper-raised);
+    border-bottom:1px solid var(--line);
+    padding:22px 20px 18px;
+  }
+  .top-inner{max-width:1040px; margin:0 auto; display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px;}
+  .eyebrow{
+    font-family:var(--font-mono); font-size:12px; letter-spacing:0.12em;
+    text-transform:uppercase; color:var(--ink-soft); margin:0 0 4px;
+  }
+  h1{font-family:var(--font-display); font-weight:700; font-size:28px; margin:0 0 4px; letter-spacing:-0.01em;}
+  .sub{color:var(--ink-soft); font-size:14px; margin:0;}
+
+  .conn-pill{
+    display:flex; align-items:center; gap:7px;
+    font-family:var(--font-mono); font-size:12px;
+    border:1px solid var(--line); border-radius:999px;
+    padding:7px 14px; white-space:nowrap; background:var(--paper);
+  }
+  .conn-dot{width:8px;height:8px;border-radius:50%; background:var(--ink-soft);}
+  .conn-pill.connected .conn-dot{background:var(--good);}
+  .conn-pill.error .conn-dot{background:var(--bad);}
+  .conn-pill.busy .conn-dot{background:var(--kuehl); animation:pulse 1s infinite ease-in-out;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
+
+  /* ---------- Layout ---------- */
+  main{max-width:1040px; margin:0 auto; padding:20px;}
+
+  /* ---------- Tabs ---------- */
+  .tabs{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:18px;}
+  .tab-btn{
+    font-family:var(--font-display); font-weight:600; font-size:14px;
+    border:1px solid var(--line); background:var(--paper-raised); color:var(--ink-soft);
+    padding:10px 16px; border-radius:999px; cursor:pointer; transition:all .15s ease; min-height:44px;
+  }
+  .tab-btn:hover{border-color:var(--ink-soft);}
+  .tab-btn.active[data-loc="kuehlschrank"]{background:var(--kuehl);border-color:var(--kuehl);color:#fff;}
+  .tab-btn.active[data-loc="tk"]{background:var(--tk);border-color:var(--tk);color:#fff;}
+  .tab-btn.active[data-loc="trockenlager"]{background:var(--trocken);border-color:var(--trocken);color:#fff;}
+  .tab-btn.active[data-loc="uebersicht"]{background:var(--ink);border-color:var(--ink);color:#fff;}
+  .tab-btn.active[data-loc="katalog"]{background:var(--ink);border-color:var(--ink);color:#fff;}
+  .tab-btn.active[data-loc="verlauf"]{background:var(--ink);border-color:var(--ink);color:#fff;}
+  .tab-btn.active[data-loc="daten"]{background:var(--ink);border-color:var(--ink);color:#fff;}
+  .tab-count{
+    display:inline-block; font-family:var(--font-mono); font-size:10.5px;
+    opacity:.75; margin-left:4px;
+  }
+
+  .panel{display:none;}
+  .panel.active{display:block;}
+
+  /* ---------- Karte je Lagerort ---------- */
+  .loc-card{background:var(--paper-raised); border:1px solid var(--line); border-radius:var(--radius); overflow:hidden; margin-bottom:18px;}
+  .loc-head{padding:16px 18px; display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:8px;}
+  .loc-head h2{font-family:var(--font-display); font-size:19px; margin:0;}
+  .loc-rule[data-loc="kuehlschrank"]{border-top:4px solid var(--kuehl);}
+  .loc-rule[data-loc="tk"]{border-top:4px solid var(--tk);}
+  .loc-rule[data-loc="trockenlager"]{border-top:4px solid var(--trocken);}
+  .loc-note{font-size:12.5px; color:var(--ink-soft); margin:0;}
+
+  /* ---------- Formular: Artikel hinzufügen ---------- */
+  .add-form{
+    display:grid; grid-template-columns:2fr 1fr 1fr 1fr 1fr 1fr auto;
+    gap:8px; padding:0 18px 16px; align-items:end;
+  }
+  .add-form label{
+    display:block; font-size:11px; color:var(--ink-soft);
+    text-transform:uppercase; letter-spacing:.06em; margin-bottom:4px;
+  }
+  .add-form input, .add-form select, .edit-cell input, .edit-cell select{
+    width:100%; padding:9px 10px; border:1px solid var(--line); border-radius:7px;
+    font-family:var(--font-body); font-size:13.5px; background:var(--paper);
+  }
+  .btn{
+    font-family:var(--font-display); font-weight:600; font-size:13.5px; border:none;
+    border-radius:7px; padding:10px 14px; cursor:pointer; min-height:40px;
+    transition:filter .15s ease, transform .05s ease;
+  }
+  .btn:active{transform:translateY(1px);}
+  .btn:disabled{opacity:.5; cursor:not-allowed;}
+  .btn-primary{background:var(--ink);color:#fff;}
+  .btn-primary:hover{filter:brightness(1.15);}
+  .btn-ghost{background:transparent;color:var(--ink-soft);border:1px solid var(--line);}
+  .btn-ghost:hover{color:var(--ink);border-color:var(--ink-soft);}
+  .btn-sm{font-size:12px; padding:7px 11px; min-height:32px;}
+
+  /* ---------- Tabelle ---------- */
+  table{width:100%; border-collapse:collapse; font-size:14px;}
+  thead th{
+    text-align:left; font-family:var(--font-mono); font-size:11px; text-transform:uppercase;
+    letter-spacing:.06em; color:var(--ink-soft); border-top:1px solid var(--line);
+    border-bottom:1px solid var(--line); padding:8px 10px; white-space:nowrap;
+  }
+  tbody td{padding:9px 10px; border-bottom:1px solid var(--line); vertical-align:middle;}
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr.editing{background:var(--kuehl-tint);}
+  td.num, th.num{font-family:var(--font-mono); text-align:right;}
+  .actions-cell{display:flex; gap:6px; justify-content:flex-end; flex-wrap:wrap;}
+  .badge{display:inline-block; font-size:11px; font-family:var(--font-mono); padding:2px 8px; border-radius:999px;}
+  .badge.essen{background:#EDEEE4;color:#5C6B3D;}
+  .badge.trinken{background:#E4EBF3;color:#33587A;}
+  .badge.sonstiges{background:var(--trocken-tint);color:var(--trocken);}
+  .badge.status-aktiv{background:#E7F0E9;color:var(--good);}
+  .badge.status-entfernt{background:#F1E9E6;color:var(--ink-soft);}
+  .badge.unit{background:#EEF0F1;color:var(--ink-soft);font-family:var(--font-mono);}
+  .diff-pos{color:var(--good);font-family:var(--font-mono);}
+  .diff-neg{color:var(--bad);font-family:var(--font-mono);}
+  .diff-zero{color:var(--ink-soft);font-family:var(--font-mono);}
+
+  .qty-controls{display:flex;align-items:center;gap:6px;justify-content:flex-end;}
+  .qty-btn{
+    width:26px;height:26px;border-radius:6px;border:1px solid var(--line);background:var(--paper);
+    cursor:pointer;font-family:var(--font-mono);font-size:14px;line-height:1;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .qty-btn:hover{background:#fff;border-color:var(--ink-soft);}
+  .link-btn{
+    background:transparent;border:none;cursor:pointer;font-family:var(--font-mono);font-size:11.5px;padding:4px 6px;
+  }
+  .link-btn.edit{color:var(--kuehl);}
+  .link-btn.del{color:var(--bad);}
+  .link-btn.save{color:var(--good); font-weight:600;}
+  .link-btn:hover{text-decoration:underline;}
+  .empty-row td{text-align:center; color:var(--ink-soft); font-style:italic; padding:22px 10px;}
+
+  /* ---------- T-Konto ---------- */
+  .tkonto{background:var(--paper-raised); border:1px solid var(--line); border-radius:var(--radius); padding:20px 22px 24px; margin-bottom:16px;}
+  .tkonto h3{font-family:var(--font-display); font-size:16px; margin:0 0 14px;}
+  .t-shape{position:relative; display:grid; grid-template-columns:1fr 1fr; border-top:2px solid var(--ink); padding-top:10px;}
+  .t-shape::before{content:""; position:absolute; top:0; bottom:0; left:50%; width:2px; background:var(--ink); transform:translateX(-1px);}
+  .t-side{padding:0 16px;}
+  .t-side.soll{text-align:right; padding-right:20px;}
+  .t-side.haben{text-align:left; padding-left:20px;}
+  .t-label{font-family:var(--font-mono); font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:var(--ink-soft); margin-bottom:6px;}
+  .t-value{font-family:var(--font-mono); font-size:22px; font-weight:600;}
+  .saldo-line{margin-top:14px; padding-top:12px; border-top:1px dashed var(--line); display:flex; justify-content:space-between; font-family:var(--font-mono); font-size:13.5px;}
+  .saldo-line strong{font-family:var(--font-display);}
+  .grand-total{
+    background:var(--ink); color:#fff; border-radius:var(--radius); padding:20px 22px;
+    display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;
+  }
+  .grand-total .label{font-family:var(--font-mono); font-size:12px; text-transform:uppercase; letter-spacing:.08em; opacity:.7;}
+  .grand-total .value{font-family:var(--font-display); font-size:24px; font-weight:700;}
+
+  /* ---------- Toolbar (Katalog / Verlauf) ---------- */
+  .toolbar{display:flex; gap:10px; flex-wrap:wrap; padding:16px 18px; align-items:end;}
+  .toolbar .field{margin-bottom:0; flex:1; min-width:140px;}
+  .toolbar input, .toolbar select{
+    width:100%; padding:9px 10px; border:1px solid var(--line); border-radius:7px;
+    font-family:var(--font-body); font-size:14px; background:var(--paper);
+  }
+  .loc-tag{font-family:var(--font-mono); font-size:10.5px; color:var(--ink-soft);}
+
+  /* ---------- Daten & Sync ---------- */
+  .data-grid{display:grid; grid-template-columns:1.1fr 0.9fr; gap:16px; align-items:start;}
+  .data-card{background:var(--paper-raised); border:1px solid var(--line); border-radius:var(--radius); padding:18px 20px;}
+  .data-card h3{font-family:var(--font-display); font-size:15px; margin:0 0 6px;}
+  .data-card p{font-size:13px;color:var(--ink-soft);margin:0 0 12px;}
+  .field{margin-bottom:10px;}
+  .field label{display:block; font-size:11px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.06em; margin-bottom:4px;}
+  .field input{
+    width:100%; padding:9px 10px; border:1px solid var(--line); border-radius:7px;
+    font-family:var(--font-mono); font-size:13px; background:var(--paper);
+  }
+  .row-2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;}
+  .status-msg{font-family:var(--font-mono); font-size:12.5px; margin-top:10px; padding:8px 10px; border-radius:7px; display:none;}
+  .status-msg.show{display:block;}
+  .status-msg.ok{background:#E7F0E9;color:var(--good);}
+  .status-msg.err{background:#F6E6E2;color:var(--bad);}
+  .status-msg.busy{background:var(--kuehl-tint);color:var(--kuehl);}
+
+  .stat-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  .stat-box{background:var(--paper); border:1px solid var(--line); border-radius:7px; padding:12px 14px;}
+  .stat-box .n{font-family:var(--font-display); font-size:22px; font-weight:700;}
+  .stat-box .l{font-family:var(--font-mono); font-size:10.5px; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-soft);}
+  .note-box{
+    font-size:12.5px; color:var(--ink-soft); background:var(--paper); border:1px dashed var(--line);
+    border-radius:7px; padding:10px 12px; margin-top:12px;
+  }
+  code{background:var(--paper); border:1px solid var(--line); border-radius:4px; padding:1px 5px; font-family:var(--font-mono); font-size:.92em;}
+
+  footer{max-width:1040px; margin:24px auto 0; padding:0 20px; font-size:12px; color:var(--ink-soft);}
+
+  /* ---------- Mobile ---------- */
+  @media (max-width:720px){
+    .add-form{grid-template-columns:1fr 1fr;}
+    .data-grid{grid-template-columns:1fr;}
+    .stat-grid{grid-template-columns:1fr 1fr;}
+    h1{font-size:23px;}
+    thead th:nth-child(2), tbody td:nth-child(2){display:none;}
+    .top-inner{flex-direction:column;}
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-inner">
+    <div>
+      <p class="eyebrow">Soll · Ist · Saldo</p>
+      <h1>Vorratsbuch</h1>
+      <p class="sub">Kühlschrank, Tiefkühlfach und Trockenlager — mit T-Konto-Bestandsführung und automatischem GitHub-Sync.</p>
+    </div>
+    <div class="conn-pill" id="conn-pill"><span class="conn-dot"></span><span id="conn-text">Nicht verbunden</span></div>
+  </div>
+</header>
+
+<main>
+
+  <nav class="tabs" id="tabs">
+    <button class="tab-btn active" data-loc="kuehlschrank">Kühlschrank</button>
+    <button class="tab-btn" data-loc="tk">TK</button>
+    <button class="tab-btn" data-loc="trockenlager">Trockenlager</button>
+    <button class="tab-btn" data-loc="uebersicht">Übersicht</button>
+    <button class="tab-btn" data-loc="katalog">Katalog</button>
+    <button class="tab-btn" data-loc="verlauf">Verlauf</button>
+    <button class="tab-btn" data-loc="daten">Sync &amp; System</button>
+  </nav>
+
+  <!-- ============ LAGERORT: KÜHLSCHRANK ============ -->
+  <div class="panel active" data-panel="kuehlschrank">
+    <div class="loc-card">
+      <div class="loc-rule" data-loc="kuehlschrank">
+        <div class="loc-head"><h2>Kühlschrank</h2><p class="loc-note">Essen &amp; Trinken erlaubt</p></div>
+        <form class="add-form" data-loc="kuehlschrank">
+          <div><label>Art des Gutes</label><input type="text" name="name" placeholder="z. B. Milch" required></div>
+          <div><label>Kategorie</label>
+            <select name="kategorie"><option value="essen">Essen</option><option value="trinken">Trinken</option></select>
+          </div>
+          <div><label>Einheit</label><select name="einheit" class="einheit-select"></select></div>
+          <div><label>Soll</label><input type="number" name="soll" min="0" step="0.01" value="1" required></div>
+          <div><label>Ist</label><input type="number" name="ist" min="0" step="0.01" value="0" required></div>
+          <div><label>Preis/Einheit (€)</label><input type="number" name="preis" min="0" step="0.01" value="0" required></div>
+          <div><button type="submit" class="btn btn-primary">+ Hinzufügen</button></div>
+        </form>
+        <div class="table-wrap"><table>
+          <thead><tr>
+            <th>Art des Gutes</th><th>Kategorie</th><th class="num">Soll</th><th class="num">Ist</th>
+            <th>Einheit</th><th class="num">Diff.</th><th class="num">Preis/Einh.</th><th></th>
+          </tr></thead>
+          <tbody id="tbody-kuehlschrank"></tbody>
+        </table></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ LAGERORT: TK ============ -->
+  <div class="panel" data-panel="tk">
+    <div class="loc-card">
+      <div class="loc-rule" data-loc="tk">
+        <div class="loc-head"><h2>TK — Tiefkühlfach</h2><p class="loc-note">Nur Essen erlaubt</p></div>
+        <form class="add-form" data-loc="tk">
+          <div><label>Art des Gutes</label><input type="text" name="name" placeholder="z. B. Pommes" required></div>
+          <div><label>Kategorie</label><select name="kategorie" disabled><option value="essen" selected>Essen</option></select></div>
+          <div><label>Einheit</label><select name="einheit" class="einheit-select"></select></div>
+          <div><label>Soll</label><input type="number" name="soll" min="0" step="0.01" value="1" required></div>
+          <div><label>Ist</label><input type="number" name="ist" min="0" step="0.01" value="0" required></div>
+          <div><label>Preis/Einheit (€)</label><input type="number" name="preis" min="0" step="0.01" value="0" required></div>
+          <div><button type="submit" class="btn btn-primary">+ Hinzufügen</button></div>
+        </form>
+        <div class="table-wrap"><table>
+          <thead><tr>
+            <th>Art des Gutes</th><th>Kategorie</th><th class="num">Soll</th><th class="num">Ist</th>
+            <th>Einheit</th><th class="num">Diff.</th><th class="num">Preis/Einh.</th><th></th>
+          </tr></thead>
+          <tbody id="tbody-tk"></tbody>
+        </table></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ LAGERORT: TROCKENLAGER ============ -->
+  <div class="panel" data-panel="trockenlager">
+    <div class="loc-card">
+      <div class="loc-rule" data-loc="trockenlager">
+        <div class="loc-head"><h2>Trockenlager</h2><p class="loc-note">Alles, was nicht gekühlt oder gefroren werden muss</p></div>
+        <form class="add-form" data-loc="trockenlager">
+          <div><label>Art des Gutes</label><input type="text" name="name" placeholder="z. B. Nudeln" required></div>
+          <div><label>Kategorie</label>
+            <select name="kategorie"><option value="essen">Essen</option><option value="trinken">Trinken</option><option value="sonstiges">Sonstiges</option></select>
+          </div>
+          <div><label>Einheit</label><select name="einheit" class="einheit-select"></select></div>
+          <div><label>Soll</label><input type="number" name="soll" min="0" step="0.01" value="1" required></div>
+          <div><label>Ist</label><input type="number" name="ist" min="0" step="0.01" value="0" required></div>
+          <div><label>Preis/Einheit (€)</label><input type="number" name="preis" min="0" step="0.01" value="0" required></div>
+          <div><button type="submit" class="btn btn-primary">+ Hinzufügen</button></div>
+        </form>
+        <div class="table-wrap"><table>
+          <thead><tr>
+            <th>Art des Gutes</th><th>Kategorie</th><th class="num">Soll</th><th class="num">Ist</th>
+            <th>Einheit</th><th class="num">Diff.</th><th class="num">Preis/Einh.</th><th></th>
+          </tr></thead>
+          <tbody id="tbody-trockenlager"></tbody>
+        </table></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ ÜBERSICHT / T-KONTO ============ -->
+  <div class="panel" data-panel="uebersicht">
+    <div class="tkonto" id="tkonto-kuehlschrank"></div>
+    <div class="tkonto" id="tkonto-tk"></div>
+    <div class="tkonto" id="tkonto-trockenlager"></div>
+    <div class="grand-total" id="grand-total"></div>
+  </div>
+
+  <!-- ============ KATALOG ============ -->
+  <div class="panel" data-panel="katalog">
+    <div class="loc-card">
+      <div class="loc-head">
+        <h2>Katalog</h2>
+        <p class="loc-note">Jeder Artikel, den du je angelegt hast — bleibt auch nach dem Entfernen aus dem Bestand sichtbar.</p>
+      </div>
+      <div class="toolbar">
+        <div class="field"><label>Suche</label><input type="text" id="katalog-suche" placeholder="z. B. Bauernbrot"></div>
+        <div class="field"><label>Lagerort</label>
+          <select id="katalog-filter-loc"><option value="alle">Alle</option><option value="kuehlschrank">Kühlschrank</option><option value="tk">TK</option><option value="trockenlager">Trockenlager</option></select>
+        </div>
+        <div class="field"><label>Status</label>
+          <select id="katalog-filter-status"><option value="alle">Alle</option><option value="aktiv">Aktiv</option><option value="entfernt">Entfernt</option></select>
+        </div>
+      </div>
+      <div class="table-wrap"><table>
+        <thead><tr>
+          <th>Art des Gutes</th><th>Lagerort</th><th>Kategorie</th><th>Einheit</th>
+          <th class="num">Preis/Einh.</th><th>Status</th><th>Hinzugefügt</th><th>Entfernt</th><th></th>
+        </tr></thead>
+        <tbody id="tbody-katalog"></tbody>
+      </table></div>
+    </div>
+  </div>
+
+  <!-- ============ VERLAUF ============ -->
+  <div class="panel" data-panel="verlauf">
+    <div class="loc-card">
+      <div class="loc-head">
+        <h2>Verlauf</h2>
+        <p class="loc-note">Jede Änderung mit Zeitstempel — wer/wann ist hier nicht nötig, da Einzelplatz-App, aber jedes „Was" ist nachvollziehbar. Aus Performance-Gründen werden die letzten <span id="verlauf-limit-label">500</span> Ereignisse gespeichert.</p>
+      </div>
+      <div class="toolbar">
+        <div class="field"><label>Suche</label><input type="text" id="verlauf-suche" placeholder="Artikel oder Aktion"></div>
+        <div class="field"><label>Lagerort</label>
+          <select id="verlauf-filter-loc"><option value="alle">Alle</option><option value="kuehlschrank">Kühlschrank</option><option value="tk">TK</option><option value="trockenlager">Trockenlager</option><option value="system">System / Sync</option></select>
+        </div>
+      </div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Zeitpunkt</th><th>Lagerort</th><th>Artikel</th><th>Aktion</th><th>Details</th></tr></thead>
+        <tbody id="tbody-verlauf"></tbody>
+      </table></div>
+    </div>
+  </div>
+
+  <!-- ============ SYNC & SYSTEM ============ -->
+  <div class="panel" data-panel="daten">
+    <div class="data-grid">
+
+      <div class="data-card">
+        <h3>GitHub-Sync (automatisch)</h3>
+        <p>Trage Repo und Token einmal ein — Laden passiert danach automatisch, und jede Änderung (Hinzufügen, Bearbeiten, Mengen, Entfernen) wird nach kurzer Verzögerung selbstständig zurückgeschrieben. Kein manueller Export/Import nötig.</p>
+        <div class="row-2">
+          <div class="field"><label>Owner</label><input type="text" id="gh-owner" value="fursmacks"></div>
+          <div class="field"><label>Repo</label><input type="text" id="gh-repo" value="fursmacks.github.io"></div>
+        </div>
+        <div class="row-2">
+          <div class="field"><label>Pfad</label><input type="text" id="gh-path" value="vorratsbuch-daten.json"></div>
+          <div class="field"><label>Branch</label><input type="text" id="gh-branch" value="main"></div>
+        </div>
+        <div class="field"><label>Personal Access Token</label><input type="password" id="gh-token" placeholder="github_pat_..."></div>
+        <div class="btn-row">
+          <button class="btn btn-primary" id="btn-gh-connect">Verbinden &amp; Laden</button>
+          <button class="btn btn-ghost" id="btn-gh-sync-now" disabled>Jetzt synchronisieren</button>
+          <button class="btn btn-ghost" id="btn-gh-disconnect" disabled>Trennen</button>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-ghost btn-sm" id="btn-net-test">Nur Netzwerk testen (ohne Token)</button>
+        </div>
+        <div class="status-msg" id="status-nettest"></div>
+        <div class="status-msg" id="status-gh"></div>
+        <div class="note-box">
+          Der Token bleibt nur im Arbeitsspeicher dieses Browser-Tabs — er wird nirgendwo gespeichert und geht beim Neuladen der Seite verloren. Fine-grained Personal Access Token mit <code>Contents: Read &amp; Write</code> auf <code>fursmacks.github.io</code> erstellen: <a href="https://github.com/settings/tokens?type=beta" target="_blank" rel="noopener">github.com/settings/tokens</a>.
+        </div>
+      </div>
+
+      <div class="data-card">
+        <h3>System &amp; Skalierung</h3>
+        <p>Kennzahlen zur aktuellen Datenmenge — relevant, wenn die App auf viele hundert Artikel wächst.</p>
+        <div class="stat-grid">
+          <div class="stat-box"><div class="n" id="stat-aktiv">0</div><div class="l">Aktive Artikel</div></div>
+          <div class="stat-box"><div class="n" id="stat-katalog">0</div><div class="l">Katalog gesamt</div></div>
+          <div class="stat-box"><div class="n" id="stat-verlauf">0</div><div class="l">Verlauf-Einträge</div></div>
+          <div class="stat-box"><div class="n" id="stat-payload">0 KB</div><div class="l">Sync-Payload</div></div>
+        </div>
+        <div class="note-box">
+          <strong>Architektur-Hinweise:</strong> Rendering läuft über einen einzigen Zustand (<code>state</code>) mit gezieltem Neuzeichnen je Tabelle statt vollständigem Seiten-Reload. GitHub-Schreibvorgänge werden mit 1,5s Debounce gebündelt, damit schnelle Mehrfachänderungen nicht zu einem API-Call pro Klick führen (schont GitHub-Rate-Limits). Der Verlauf ist auf die letzten 500 Ereignisse begrenzt (Ringpuffer), damit die JSON-Datei und die Renderzeit auch nach Monaten Nutzung klein bleiben. Bei sehr großen Bestände (&gt;1000 aktive Artikel) wäre der nächste Schritt eine echte Datenbank/API statt einer einzelnen JSON-Datei — für einen Haushalt reicht dieses Modell komfortabel aus.
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  Alle Änderungen werden automatisch mit deinem verbundenen GitHub-Repo synchronisiert, sobald „Verbinden &amp; Laden" erfolgreich war. Ohne Verbindung bleibt der Stand nur im Arbeitsspeicher dieses Tabs und geht beim Schließen verloren.
+</footer>
+
+<script>
+(function(){
+  "use strict";
+
+  const LOCATIONS = ["kuehlschrank","tk","trockenlager"];
+  const LOC_LABEL = {kuehlschrank:"Kühlschrank", tk:"TK (Tiefkühl)", trockenlager:"Trockenlager"};
+  const VERLAUF_LIMIT = 500; // Ringpuffer-Grenze aus Performance-/Skalierungsgründen
+
+  // Verfügbare Mengeneinheiten. "step" bestimmt Schrittweite der +/- Buttons
+  // und Zahlenformatierung (ganzzahlig vs. mit Nachkommastellen).
+  const EINHEITEN = [
+    {code:"STK",   label:"STK · Stück",      step:1},
+    {code:"BTL",   label:"BTL · Beutel",     step:1},
+    {code:"PCK",   label:"PCK · Packung",    step:1},
+    {code:"DOSE",  label:"Dose",             step:1},
+    {code:"FL",    label:"FL · Flasche",     step:1},
+    {code:"GLAS",  label:"Glas",             step:1},
+    {code:"ROLLE", label:"Rolle",            step:1},
+    {code:"KG",    label:"KG · Kilogramm",   step:0.1},
+    {code:"G",     label:"G · Gramm",        step:10},
+    {code:"L",     label:"L · Liter",        step:0.1},
+    {code:"ML",    label:"ML · Milliliter",  step:10}
+  ];
+  const EINHEIT_MAP = {};
+  EINHEITEN.forEach(function(e){ EINHEIT_MAP[e.code] = e; });
+
+  function einheitStep(code){ return (EINHEIT_MAP[code] && EINHEIT_MAP[code].step) || 1; }
+  function formatMenge(n, code){
+    const step = einheitStep(code);
+    if(step >= 1) return String(Math.round(n));
+    return n.toLocaleString('de-DE', {minimumFractionDigits:1, maximumFractionDigits:2});
+  }
+  function einheitOptionsHtml(selected){
+    return EINHEITEN.map(function(e){
+      return '<option value="' + e.code + '"' + (e.code === selected ? ' selected' : '') + '>' + e.label + '</option>';
+    }).join('');
+  }
+  document.querySelectorAll('select.einheit-select').forEach(function(sel){ sel.innerHTML = einheitOptionsHtml('STK'); });
+
+  function uid(){ return 'a' + Math.random().toString(36).slice(2,10); }
+  function nowIso(){ return new Date().toISOString(); }
+
+  // ---------------------------------------------------------
+  // Zustand (im Arbeitsspeicher). Persistenz erfolgt ausschließlich
+  // automatisch über GitHub, sobald verbunden (siehe unten).
+  // ---------------------------------------------------------
+  const t0 = nowIso();
+  let state = {
+    kuehlschrank: [
+      {id: uid(), name:"Milch", kategorie:"trinken", einheit:"L",   soll:5,  ist:3,  preis:1.20, aktiv:true, hinzugefuegtAm:t0, aktualisiertAm:t0, entferntAm:null},
+      {id: uid(), name:"Käse",  kategorie:"essen",   einheit:"STK", soll:4,  ist:4,  preis:2.50, aktiv:true, hinzugefuegtAm:t0, aktualisiertAm:t0, entferntAm:null}
+    ],
+    tk: [
+      {id: uid(), name:"Pommes", kategorie:"essen", einheit:"BTL", soll:10, ist:6,  preis:1.80, aktiv:true, hinzugefuegtAm:t0, aktualisiertAm:t0, entferntAm:null}
+    ],
+    trockenlager: [
+      {id: uid(), name:"Nudeln", kategorie:"essen",   einheit:"KG", soll:20, ist:15, preis:0.99, aktiv:true, hinzugefuegtAm:t0, aktualisiertAm:t0, entferntAm:null},
+      {id: uid(), name:"Cola",   kategorie:"trinken", einheit:"FL", soll:12, ist:12, preis:0.85, aktiv:true, hinzugefuegtAm:t0, aktualisiertAm:t0, entferntAm:null}
+    ]
+  };
+  let verlauf = []; // neueste zuerst, siehe logVerlauf()
+
+  // { kuehlschrank: <id der gerade bearbeiteten Zeile oder null>, ... }
+  let editing = {kuehlschrank:null, tk:null, trockenlager:null};
+
+  function logVerlauf(loc, name, aktion, details){
+    verlauf.unshift({
+      id: uid(),
+      zeitpunkt: nowIso(),
+      loc: loc,          // 'kuehlschrank' | 'tk' | 'trockenlager' | 'system'
+      name: name,
+      aktion: aktion,
+      details: details || ''
+    });
+    if(verlauf.length > VERLAUF_LIMIT) verlauf.length = VERLAUF_LIMIT; // Ringpuffer
+  }
+
+  // ---------------------------------------------------------
+  // Tabs
+  // ---------------------------------------------------------
+  document.getElementById('tabs').addEventListener('click', function(e){
+    const btn = e.target.closest('.tab-btn');
+    if(!btn) return;
+    document.querySelectorAll('.tab-btn').forEach(function(b){ b.classList.remove('active'); });
+    document.querySelectorAll('.panel').forEach(function(p){ p.classList.remove('active'); });
+    btn.classList.add('active');
+    document.querySelector('.panel[data-panel="' + btn.dataset.loc + '"]').classList.add('active');
+  });
+
+  function kategorieLabel(k){
+    if(k === 'trinken') return 'Trinken';
+    if(k === 'sonstiges') return 'Sonstiges';
+    return 'Essen';
+  }
+  function escapeHtml(str){
+    return String(str).replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+  function kategorieOptionsHtml(loc, selected){
+    const opts = [['essen','Essen'], ['trinken','Trinken']];
+    if(loc === 'trockenlager') opts.push(['sonstiges','Sonstiges']);
+    return opts.map(function(o){
+      return '<option value="' + o[0] + '"' + (o[0] === selected ? ' selected' : '') + '>' + o[1] + '</option>';
+    }).join('');
+  }
+
+  // ---------------------------------------------------------
+  // Rendering: Tabellen je Lagerort (inkl. Inline-Bearbeitung)
+  // ---------------------------------------------------------
+  function renderTabelle(loc){
+    const tbody = document.getElementById('tbody-' + loc);
+    const items = state[loc].filter(function(a){ return a.aktiv !== false; });
+    if(!items.length){
+      tbody.innerHTML = '<tr class="empty-row"><td colspan="8">Noch keine Artikel im ' + LOC_LABEL[loc] + '.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = items.map(function(a){
+      if(editing[loc] === a.id) return renderEditRow(loc, a);
+      return renderViewRow(loc, a);
+    }).join('');
+  }
+
+  function renderViewRow(loc, a){
+    const diff = a.ist - a.soll;
+    const diffClass = diff > 0 ? 'diff-pos' : (diff < 0 ? 'diff-neg' : 'diff-zero');
+    const diffText = (diff > 0 ? '+' : '') + formatMenge(diff, a.einheit);
+    return '' +
+      '<tr>' +
+        '<td>' + escapeHtml(a.name) + '</td>' +
+        '<td><span class="badge ' + a.kategorie + '">' + kategorieLabel(a.kategorie) + '</span></td>' +
+        '<td class="num">' + formatMenge(a.soll, a.einheit) + '</td>' +
+        '<td class="num"><div class="qty-controls">' +
+            '<button class="qty-btn" data-action="dec" data-loc="' + loc + '" data-id="' + a.id + '">−</button>' +
+            '<span>' + formatMenge(a.ist, a.einheit) + '</span>' +
+            '<button class="qty-btn" data-action="inc" data-loc="' + loc + '" data-id="' + a.id + '">+</button>' +
+          '</div></td>' +
+        '<td><span class="badge unit">' + a.einheit + '</span></td>' +
+        '<td class="num ' + diffClass + '">' + diffText + '</td>' +
+        '<td class="num">' + a.preis.toFixed(2) + ' €</td>' +
+        '<td><div class="actions-cell">' +
+            '<button class="link-btn edit" data-action="edit" data-loc="' + loc + '" data-id="' + a.id + '">bearbeiten</button>' +
+            '<button class="link-btn del" data-action="del" data-loc="' + loc + '" data-id="' + a.id + '">entfernen</button>' +
+          '</div></td>' +
+      '</tr>';
+  }
+
+  function renderEditRow(loc, a){
+    return '' +
+      '<tr class="editing" data-edit-row="' + a.id + '">' +
+        '<td class="edit-cell"><input type="text" data-f="name" value="' + escapeHtml(a.name) + '"></td>' +
+        '<td class="edit-cell"><select data-f="kategorie"' + (loc === 'tk' ? ' disabled' : '') + '>' + kategorieOptionsHtml(loc, a.kategorie) + '</select></td>' +
+        '<td class="edit-cell"><input type="number" step="0.01" min="0" data-f="soll" value="' + a.soll + '"></td>' +
+        '<td class="edit-cell"><input type="number" step="0.01" min="0" data-f="ist" value="' + a.ist + '"></td>' +
+        '<td class="edit-cell"><select data-f="einheit">' + einheitOptionsHtml(a.einheit) + '</select></td>' +
+        '<td class="num diff-zero">–</td>' +
+        '<td class="edit-cell"><input type="number" step="0.01" min="0" data-f="preis" value="' + a.preis + '"></td>' +
+        '<td><div class="actions-cell">' +
+            '<button class="link-btn save" data-action="save-edit" data-loc="' + loc + '" data-id="' + a.id + '">speichern</button>' +
+            '<button class="link-btn" data-action="cancel-edit" data-loc="' + loc + '" data-id="' + a.id + '">abbrechen</button>' +
+          '</div></td>' +
+      '</tr>';
+  }
+
+  // ---------------------------------------------------------
+  // Wertberechnung (T-Konto-Logik) — nur aktive Artikel zählen
+  // ---------------------------------------------------------
+  function sollWert(loc){
+    return state[loc].filter(function(a){ return a.aktiv !== false; }).reduce(function(s,a){ return s + a.soll * a.preis; }, 0);
+  }
+  function istWert(loc){
+    return state[loc].filter(function(a){ return a.aktiv !== false; }).reduce(function(s,a){ return s + a.ist * a.preis; }, 0);
+  }
+  function euro(n){ return n.toLocaleString('de-DE', {minimumFractionDigits:2, maximumFractionDigits:2}) + ' €'; }
+
+  function renderTKonto(){
+    LOCATIONS.forEach(function(loc){
+      const soll = sollWert(loc), ist = istWert(loc), saldo = ist - soll;
+      const el = document.getElementById('tkonto-' + loc);
+      let saldoText, saldoClass;
+      if (saldo === 0){ saldoText = 'Bestand entspricht dem Soll — ausgeglichen.'; saldoClass = 'diff-zero'; }
+      else if (saldo > 0){ saldoText = 'Überschuss von ' + euro(saldo) + ' gegenüber dem Soll.'; saldoClass = 'diff-pos'; }
+      else { saldoText = 'Fehlbestand (Manko) von ' + euro(-saldo) + ' gegenüber dem Soll.'; saldoClass = 'diff-neg'; }
+      el.innerHTML =
+        '<h3>' + LOC_LABEL[loc] + '</h3>' +
+        '<div class="t-shape">' +
+          '<div class="t-side soll"><div class="t-label">Soll</div><div class="t-value">' + euro(soll) + '</div></div>' +
+          '<div class="t-side haben"><div class="t-label">Haben (Ist)</div><div class="t-value">' + euro(ist) + '</div></div>' +
+        '</div>' +
+        '<div class="saldo-line ' + saldoClass + '"><span>Saldo</span><strong>' + saldoText + '</strong></div>';
+    });
+    const sollGesamt = LOCATIONS.reduce(function(s,loc){ return s + sollWert(loc); }, 0);
+    const istGesamt = LOCATIONS.reduce(function(s,loc){ return s + istWert(loc); }, 0);
+    const gesamtSaldo = istGesamt - sollGesamt;
+    document.getElementById('grand-total').innerHTML =
+      '<div><div class="label">Gesamt Sollwert</div><div class="value">' + euro(sollGesamt) + '</div></div>' +
+      '<div><div class="label">Gesamt Istwert</div><div class="value">' + euro(istGesamt) + '</div></div>' +
+      '<div><div class="label">Gesamtsaldo</div><div class="value">' + (gesamtSaldo>=0?'+':'') + euro(gesamtSaldo) + '</div></div>';
+  }
+
+  // ---------------------------------------------------------
+  // Katalog
+  // ---------------------------------------------------------
+  function formatDatum(iso){
+    if(!iso) return '–';
+    const d = new Date(iso);
+    return d.toLocaleDateString('de-DE') + ' ' + d.toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'});
+  }
+
+  function renderKatalog(){
+    const tbody = document.getElementById('tbody-katalog');
+    if(!tbody) return;
+    const suche = (document.getElementById('katalog-suche').value || '').trim().toLowerCase();
+    const filterLoc = document.getElementById('katalog-filter-loc').value;
+    const filterStatus = document.getElementById('katalog-filter-status').value;
+
+    let eintraege = [];
+    LOCATIONS.forEach(function(loc){ state[loc].forEach(function(a){ eintraege.push(Object.assign({loc:loc}, a)); }); });
+
+    eintraege = eintraege.filter(function(a){
+      if(suche && a.name.toLowerCase().indexOf(suche) === -1) return false;
+      if(filterLoc !== 'alle' && a.loc !== filterLoc) return false;
+      const aktiv = a.aktiv !== false;
+      if(filterStatus === 'aktiv' && !aktiv) return false;
+      if(filterStatus === 'entfernt' && aktiv) return false;
+      return true;
+    });
+    eintraege.sort(function(x,y){ return (y.hinzugefuegtAm||'').localeCompare(x.hinzugefuegtAm||''); });
+
+    if(!eintraege.length){
+      tbody.innerHTML = '<tr class="empty-row"><td colspan="9">Keine Einträge gefunden.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = eintraege.map(function(a){
+      const aktiv = a.aktiv !== false;
+      return '' +
+        '<tr>' +
+          '<td>' + escapeHtml(a.name) + '</td>' +
+          '<td class="loc-tag">' + LOC_LABEL[a.loc] + '</td>' +
+          '<td><span class="badge ' + a.kategorie + '">' + kategorieLabel(a.kategorie) + '</span></td>' +
+          '<td><span class="badge unit">' + a.einheit + '</span></td>' +
+          '<td class="num">' + a.preis.toFixed(2) + ' €</td>' +
+          '<td><span class="badge status-' + (aktiv?'aktiv':'entfernt') + '">' + (aktiv?'Aktiv':'Entfernt') + '</span></td>' +
+          '<td class="loc-tag">' + formatDatum(a.hinzugefuegtAm) + '</td>' +
+          '<td class="loc-tag">' + formatDatum(a.entferntAm) + '</td>' +
+          '<td><button class="link-btn del" data-hard-loc="' + a.loc + '" data-hard-id="' + a.id + '">endgültig löschen</button></td>' +
+        '</tr>';
+    }).join('');
+  }
+
+  ['katalog-suche','katalog-filter-loc','katalog-filter-status'].forEach(function(id){
+    document.getElementById(id).addEventListener('input', renderKatalog);
+    document.getElementById(id).addEventListener('change', renderKatalog);
+  });
+
+  document.getElementById('tbody-katalog').addEventListener('click', function(e){
+    const btn = e.target.closest('button[data-hard-id]');
+    if(!btn) return;
+    const loc = btn.dataset.hardLoc, id = btn.dataset.hardId;
+    const artikel = state[loc].find(function(a){ return a.id === id; });
+    if(!artikel) return;
+    if(!window.confirm('"' + artikel.name + '" wirklich endgültig löschen? Das kann nicht rückgängig gemacht werden.')) return;
+    state[loc] = state[loc].filter(function(a){ return a.id !== id; });
+    logVerlauf(loc, artikel.name, 'Endgültig gelöscht', '');
+    renderAll();
+    scheduleAutoSync();
+  });
+
+  // ---------------------------------------------------------
+  // Verlauf
+  // ---------------------------------------------------------
+  function renderVerlauf(){
+    const tbody = document.getElementById('tbody-verlauf');
+    if(!tbody) return;
+    const suche = (document.getElementById('verlauf-suche').value || '').trim().toLowerCase();
+    const filterLoc = document.getElementById('verlauf-filter-loc').value;
+
+    let liste = verlauf.filter(function(v){
+      if(suche && v.name.toLowerCase().indexOf(suche) === -1 && v.aktion.toLowerCase().indexOf(suche) === -1) return false;
+      if(filterLoc !== 'alle' && v.loc !== filterLoc) return false;
+      return true;
+    });
+
+    document.getElementById('stat-verlauf').textContent = verlauf.length;
+
+    if(!liste.length){
+      tbody.innerHTML = '<tr class="empty-row"><td colspan="5">Noch keine Ereignisse.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = liste.slice(0, 200).map(function(v){
+      return '' +
+        '<tr>' +
+          '<td class="loc-tag">' + formatDatum(v.zeitpunkt) + '</td>' +
+          '<td class="loc-tag">' + (v.loc === 'system' ? 'System' : LOC_LABEL[v.loc]) + '</td>' +
+          '<td>' + escapeHtml(v.name) + '</td>' +
+          '<td>' + escapeHtml(v.aktion) + '</td>' +
+          '<td class="loc-tag">' + escapeHtml(v.details) + '</td>' +
+        '</tr>';
+    }).join('');
+  }
+  ['verlauf-suche','verlauf-filter-loc'].forEach(function(id){
+    document.getElementById(id).addEventListener('input', renderVerlauf);
+    document.getElementById(id).addEventListener('change', renderVerlauf);
+  });
+
+  // ---------------------------------------------------------
+  // System-/Skalierungs-Statistik
+  // ---------------------------------------------------------
+  function renderStats(){
+    let aktiv = 0, gesamt = 0;
+    LOCATIONS.forEach(function(loc){
+      state[loc].forEach(function(a){ gesamt++; if(a.aktiv !== false) aktiv++; });
+    });
+    document.getElementById('stat-aktiv').textContent = aktiv;
+    document.getElementById('stat-katalog').textContent = gesamt;
+    const payload = buildSyncPayload();
+    const kb = new Blob([JSON.stringify(payload)]).size / 1024;
+    document.getElementById('stat-payload').textContent = kb.toFixed(1) + ' KB';
+  }
+
+  function renderAll(){
+    LOCATIONS.forEach(renderTabelle);
+    renderTKonto();
+    renderKatalog();
+    renderVerlauf();
+    renderStats();
+  }
+
+  // ---------------------------------------------------------
+  // Artikel hinzufügen (mit TK-Regel: nur Essen) + Reaktivierung
+  // ---------------------------------------------------------
+  document.querySelectorAll('form.add-form').forEach(function(form){
+    form.addEventListener('submit', function(e){
+      e.preventDefault();
+      const loc = form.dataset.loc;
+      const fd = new FormData(form);
+      const name = String(fd.get('name') || '').trim();
+      if(!name) return;
+      let kategorie = fd.get('kategorie');
+      if(loc === 'tk') kategorie = 'essen';
+      const einheit = EINHEIT_MAP[fd.get('einheit')] ? fd.get('einheit') : 'STK';
+      const soll = Math.max(0, parseFloat(fd.get('soll')) || 0);
+      const ist = Math.max(0, parseFloat(fd.get('ist')) || 0);
+      const preis = Math.max(0, parseFloat(fd.get('preis')) || 0);
+      const now = nowIso();
+
+      const bestehend = state[loc].find(function(a){ return a.name.toLowerCase() === name.toLowerCase(); });
+      if(bestehend){
+        const warEntfernt = bestehend.aktiv === false;
+        if(warEntfernt){
+          bestehend.soll = soll; bestehend.ist = ist;
+          bestehend.preis = preis; bestehend.kategorie = kategorie; bestehend.einheit = einheit;
+          bestehend.aktiv = true; bestehend.entferntAm = null; bestehend.aktualisiertAm = now;
+          logVerlauf(loc, name, 'Reaktiviert', formatMenge(soll, einheit) + ' Soll / ' + formatMenge(ist, einheit) + ' Ist · ' + preis.toFixed(2) + ' €');
+        } else {
+          const altSoll = bestehend.soll, altIst = bestehend.ist;
+          bestehend.soll += soll; bestehend.ist += ist;
+          bestehend.preis = preis; bestehend.aktualisiertAm = now;
+          logVerlauf(loc, name, 'Bestand aufgestockt',
+            'Soll ' + formatMenge(altSoll, einheit) + '→' + formatMenge(bestehend.soll, einheit) +
+            ', Ist ' + formatMenge(altIst, einheit) + '→' + formatMenge(bestehend.ist, einheit));
+        }
+      } else {
+        state[loc].push({id:uid(), name, kategorie, einheit, soll, ist, preis, aktiv:true, hinzugefuegtAm:now, aktualisiertAm:now, entferntAm:null});
+        logVerlauf(loc, name, 'Hinzugefügt', formatMenge(soll, einheit) + ' Soll / ' + formatMenge(ist, einheit) + ' Ist · ' + preis.toFixed(2) + ' €');
+      }
+
+      form.reset();
+      form.querySelector('[name="soll"]').value = 1;
+      form.querySelector('[name="ist"]').value = 0;
+      form.querySelector('[name="preis"]').value = 0;
+      renderAll();
+      scheduleAutoSync();
+    });
+  });
+
+  // ---------------------------------------------------------
+  // Mengen ändern / bearbeiten / entfernen (Klick-Delegation je Tabelle)
+  // ---------------------------------------------------------
+  document.querySelectorAll('tbody[id^="tbody-"]').forEach(function(tbody){
+    if(tbody.id === 'tbody-katalog') return; // eigener Handler oben
+    tbody.addEventListener('click', function(e){
+      const btn = e.target.closest('button[data-action]');
+      if(!btn) return;
+      const loc = btn.dataset.loc, id = btn.dataset.id, action = btn.dataset.action;
+      const artikel = state[loc].find(function(a){ return a.id === id; });
+      if(!artikel) return;
+      const now = nowIso();
+
+      if(action === 'inc'){
+        const step = einheitStep(artikel.einheit);
+        const alt = artikel.ist;
+        artikel.ist = Math.round((artikel.ist + step) * 100) / 100;
+        artikel.aktualisiertAm = now;
+        logVerlauf(loc, artikel.name, 'Menge geändert', formatMenge(alt, artikel.einheit) + ' → ' + formatMenge(artikel.ist, artikel.einheit) + ' ' + artikel.einheit);
+        renderTabelle(loc); renderTKonto(); renderStats();
+        scheduleAutoSync();
+      } else if(action === 'dec'){
+        const step = einheitStep(artikel.einheit);
+        const alt = artikel.ist;
+        artikel.ist = Math.max(0, Math.round((artikel.ist - step) * 100) / 100);
+        artikel.aktualisiertAm = now;
+        logVerlauf(loc, artikel.name, 'Menge geändert', formatMenge(alt, artikel.einheit) + ' → ' + formatMenge(artikel.ist, artikel.einheit) + ' ' + artikel.einheit);
+        renderTabelle(loc); renderTKonto(); renderStats();
+        scheduleAutoSync();
+      } else if(action === 'del'){
+        artikel.aktiv = false; artikel.ist = 0; artikel.entferntAm = now; artikel.aktualisiertAm = now;
+        logVerlauf(loc, artikel.name, 'Entfernt', '');
+        renderAll();
+        scheduleAutoSync();
+      } else if(action === 'edit'){
+        editing[loc] = id;
+        renderTabelle(loc); // gezieltes Neuzeichnen nur dieser Tabelle
+      } else if(action === 'cancel-edit'){
+        editing[loc] = null;
+        renderTabelle(loc);
+      } else if(action === 'save-edit'){
+        const row = tbody.querySelector('tr[data-edit-row="' + id + '"]');
+        if(!row) return;
+        const neuName = row.querySelector('[data-f="name"]').value.trim() || artikel.name;
+        let neuKategorie = row.querySelector('[data-f="kategorie"]').value;
+        if(loc === 'tk') neuKategorie = 'essen';
+        const neuEinheit = EINHEIT_MAP[row.querySelector('[data-f="einheit"]').value] ? row.querySelector('[data-f="einheit"]').value : artikel.einheit;
+        const neuSoll = Math.max(0, parseFloat(row.querySelector('[data-f="soll"]').value) || 0);
+        const neuIst = Math.max(0, parseFloat(row.querySelector('[data-f="ist"]').value) || 0);
+        const neuPreis = Math.max(0, parseFloat(row.querySelector('[data-f="preis"]').value) || 0);
+
+        const aenderungen = [];
+        if(neuName !== artikel.name) aenderungen.push('Name: "' + artikel.name + '" → "' + neuName + '"');
+        if(neuKategorie !== artikel.kategorie) aenderungen.push('Kategorie: ' + kategorieLabel(artikel.kategorie) + ' → ' + kategorieLabel(neuKategorie));
+        if(neuEinheit !== artikel.einheit) aenderungen.push('Einheit: ' + artikel.einheit + ' → ' + neuEinheit);
+        if(neuSoll !== artikel.soll) aenderungen.push('Soll: ' + formatMenge(artikel.soll, artikel.einheit) + ' → ' + formatMenge(neuSoll, neuEinheit));
+        if(neuIst !== artikel.ist) aenderungen.push('Ist: ' + formatMenge(artikel.ist, artikel.einheit) + ' → ' + formatMenge(neuIst, neuEinheit));
+        if(neuPreis !== artikel.preis) aenderungen.push('Preis: ' + artikel.preis.toFixed(2) + ' € → ' + neuPreis.toFixed(2) + ' €');
+
+        artikel.name = neuName; artikel.kategorie = neuKategorie; artikel.einheit = neuEinheit;
+        artikel.soll = neuSoll; artikel.ist = neuIst; artikel.preis = neuPreis;
+        artikel.aktualisiertAm = now;
+
+        if(aenderungen.length) logVerlauf(loc, neuName, 'Bearbeitet', aenderungen.join(' · '));
+
+        editing[loc] = null;
+        renderAll();
+        scheduleAutoSync();
+      }
+    });
+  });
+
+  // ===========================================================
+  // GitHub-Sync — vollautomatisch nach dem ersten Verbinden.
+  // Kein manueller JSON-Export/Import mehr: Laden passiert beim
+  // Verbinden, Speichern passiert (debounced) nach jeder Änderung.
+  // ===========================================================
+  function b64EncodeUnicode(str){ return btoa(unescape(encodeURIComponent(str))); }
+  function b64DecodeUnicode(str){ return decodeURIComponent(escape(atob(str))); }
+
+  function loadConfig() {
+    const saved = localStorage.getItem('vorratsbuch_gh_config');
+    if (saved) {
+      try {
+        const cfg = JSON.parse(saved);
+        if (cfg.owner) document.getElementById('gh-owner').value = cfg.owner;
+        if (cfg.repo) document.getElementById('gh-repo').value = cfg.repo;
+        if (cfg.path) document.getElementById('gh-path').value = cfg.path;
+        if (cfg.branch) document.getElementById('gh-branch').value = cfg.branch;
+        if (cfg.token) document.getElementById('gh-token').value = cfg.token;
+        return cfg;
+      } catch(e) {}
+    }
+    return null;
+  }
+
+  function ghConfig(){
+    const cfg = {
+      owner: document.getElementById('gh-owner').value.trim(),
+      repo: document.getElementById('gh-repo').value.trim(),
+      path: document.getElementById('gh-path').value.trim() || 'vorratsbuch-daten.json',
+      branch: document.getElementById('gh-branch').value.trim() || 'main',
+      token: document.getElementById('gh-token').value.trim()
+    };
+    localStorage.setItem('vorratsbuch_gh_config', JSON.stringify(cfg));
+    return cfg;
+  }
+
+  function buildSyncPayload(){
+    return { version:3, exportiertAm: nowIso(), state: state, verlauf: verlauf };
+  }
+
+  function applyLoadedPayload(parsed){
+    const incoming = parsed && parsed.state ? parsed.state : parsed;
+    const now = nowIso();
+    LOCATIONS.forEach(function(loc){
+      if(Array.isArray(incoming[loc])){
+        state[loc] = incoming[loc].map(function(a){
+          let kategorie = a.kategorie === 'trinken' ? 'trinken' : (a.kategorie === 'sonstiges' ? 'sonstiges' : 'essen');
+          if(loc === 'tk') kategorie = 'essen';
+          if(loc !== 'trockenlager' && kategorie === 'sonstiges') kategorie = 'essen';
+          const einheit = EINHEIT_MAP[a.einheit] ? a.einheit : 'STK';
+          return {
+            id: a.id || uid(), name: a.name || '', kategorie: kategorie, einheit: einheit,
+            soll: Number(a.soll) || 0, ist: Number(a.ist) || 0, preis: Number(a.preis) || 0,
+            aktiv: a.aktiv !== false,
+            hinzugefuegtAm: a.hinzugefuegtAm || now, aktualisiertAm: a.aktualisiertAm || now, entferntAm: a.entferntAm || null
+          };
+        });
+      }
+    });
+    if(parsed && Array.isArray(parsed.verlauf)){
+      verlauf = parsed.verlauf.slice(0, VERLAUF_LIMIT);
+    }
+    editing = {kuehlschrank:null, tk:null, trockenlager:null};
+    renderAll();
+  }
+
+  function setConnPill(state_, text){
+    const pill = document.getElementById('conn-pill');
+    pill.classList.remove('connected','error','busy');
+    if(state_) pill.classList.add(state_);
+    document.getElementById('conn-text').textContent = text;
+  }
+  function showStatus(msg, kind){
+    const el = document.getElementById('status-gh');
+    el.textContent = msg;
+    el.classList.remove('ok','err','busy');
+    el.classList.add('show', kind);
+  }
+
+  let connected = false;
+
+  // Reiner Erreichbarkeitstest ohne Token/Repo — grenzt ein, ob das Problem
+  // generell am Netzwerk/Browser liegt oder erst bei Auth/Repo-Zugriff.
+  document.getElementById('btn-net-test').addEventListener('click', async function(){
+    const el = document.getElementById('status-nettest');
+    el.classList.add('show'); el.classList.remove('ok','err','busy'); el.classList.add('busy');
+    el.textContent = 'Teste Erreichbarkeit von api.github.com …';
+    try{
+      const resp = await fetch('https://api.github.com/');
+      el.classList.remove('busy');
+      if(resp.ok || resp.status === 200){
+        el.classList.add('ok');
+        el.textContent = 'Netzwerk OK — api.github.com ist erreichbar (Status ' + resp.status + '). Falls "Verbinden & Laden" trotzdem fehlschlägt, liegt es an Token/Repo/Branch, nicht am Netzwerk.';
+      } else {
+        el.classList.add('err');
+        el.textContent = 'api.github.com hat geantwortet, aber mit Status ' + resp.status + '.';
+      }
+    }catch(err){
+      el.classList.remove('busy'); el.classList.add('err');
+      el.textContent = 'Netzwerk-Test fehlgeschlagen: ' + erklaereFehler(err) + ' Öffne zusätzlich die Browser-Konsole (F12 → Console/Network) für Details.';
+    }
+  });
+
+  // "Failed to fetch" ist ein Browser-Netzwerkfehler (kein GitHub-Statuscode) —
+  // meist CORS-Sandbox der Vorschau, Werbeblocker oder fehlende Internetverbindung.
+  // Wir übersetzen das hier in einen konkreten Hinweis statt der kryptischen
+  // Standardmeldung.
+  function erklaereFehler(err){
+    const istNetzwerkfehler = err instanceof TypeError || /failed to fetch/i.test(err.message || '');
+    if(istNetzwerkfehler){
+      return 'Verbindung zu GitHub konnte nicht aufgebaut werden ("Failed to fetch"). Häufigste Ursache: Diese Seite läuft gerade in einer eingebetteten Vorschau (z. B. Chat-Vorschau), die externe Netzwerkaufrufe blockiert — bitte die Datei herunterladen und direkt in einem normalen Browser-Tab öffnen. Falls das schon der Fall ist: Werbeblocker/Privacy-Extension testweise deaktivieren oder Internetverbindung prüfen.';
+    }
+    return err.message;
+  }
+
+  document.getElementById('btn-gh-connect').addEventListener('click', async function(){
+    const cfg = ghConfig();
+    if(!cfg.owner || !cfg.repo || !cfg.token){
+      showStatus('Bitte Owner, Repo und Token ausfüllen.', 'err');
+      return;
+    }
+    setConnPill('busy', 'Verbinde …');
+    showStatus('Lade bestehenden Stand von GitHub …', 'busy');
+    const apiUrl = 'https://api.github.com/repos/' + cfg.owner + '/' + cfg.repo + '/contents/' + cfg.path + '?ref=' + encodeURIComponent(cfg.branch);
+    try{
+      const resp = await fetch(apiUrl, { headers: { 'Authorization':'Bearer ' + cfg.token, 'Accept':'application/vnd.github+json' } });
+      if(resp.status === 200){
+        const data = await resp.json();
+        const jsonText = b64DecodeUnicode(data.content.replace(/\n/g, ''));
+        const parsed = JSON.parse(jsonText);
+        applyLoadedPayload(parsed);
+        logVerlauf('system', '(gesamter Bestand)', 'Von GitHub geladen', cfg.owner + '/' + cfg.repo + '/' + cfg.path);
+        renderAll();
+        showStatus('Bestehender Stand geladen. Auto-Sync ist jetzt aktiv.', 'ok');
+      } else if(resp.status === 404){
+        // Noch keine Datei im Repo -> aktuellen (lokalen) Stand als Erstanlage sichern
+        showStatus('Noch keine Datei im Repo gefunden — lege sie jetzt mit dem aktuellen Stand an.', 'busy');
+        await pushToGitHub(false);
+      } else {
+        const errData = await resp.json().catch(function(){ return {}; });
+        throw new Error('Laden fehlgeschlagen (' + resp.status + '): ' + (errData.message || ''));
+      }
+      connected = true;
+      setConnPill('connected', 'Verbunden: ' + cfg.owner + '/' + cfg.repo);
+      document.getElementById('btn-gh-sync-now').disabled = false;
+      document.getElementById('btn-gh-disconnect').disabled = false;
+      document.getElementById('btn-gh-connect').textContent = 'Neu laden';
+    }catch(err){
+      connected = false;
+      setConnPill('error', 'Verbindung fehlgeschlagen');
+      showStatus(erklaereFehler(err), 'err');
+    }
+  });
+
+  document.getElementById('btn-gh-disconnect').addEventListener('click', function(){
+    connected = false;
+    if(autoSyncTimer) clearTimeout(autoSyncTimer);
+    setConnPill(null, 'Nicht verbunden');
+    document.getElementById('btn-gh-sync-now').disabled = true;
+    document.getElementById('btn-gh-disconnect').disabled = true;
+    document.getElementById('btn-gh-connect').textContent = 'Verbinden & Laden';
+    showStatus('Getrennt. Änderungen werden nicht mehr automatisch gesichert.', 'err');
+  });
+
+  document.getElementById('btn-gh-sync-now').addEventListener('click', function(){ pushToGitHub(false); });
+
+  async function pushToGitHub(silent){
+    const cfg = ghConfig();
+    if(!cfg.owner || !cfg.repo || !cfg.token){
+      showStatus('Bitte Owner, Repo und Token ausfüllen.', 'err');
+      return false;
+    }
+    const apiUrl = 'https://api.github.com/repos/' + cfg.owner + '/' + cfg.repo + '/contents/' + cfg.path;
+    if(!silent) setConnPill('busy', 'Synchronisiere …');
+    try{
+      let sha;
+      const getResp = await fetch(apiUrl + '?ref=' + encodeURIComponent(cfg.branch), {
+        headers: { 'Authorization':'Bearer ' + cfg.token, 'Accept':'application/vnd.github+json' }
+      });
+      if(getResp.status === 200){ sha = (await getResp.json()).sha; }
+      else if(getResp.status !== 404){
+        const errData = await getResp.json().catch(function(){ return {}; });
+        throw new Error('Lesen fehlgeschlagen (' + getResp.status + '): ' + (errData.message || ''));
+      }
+
+      const content = b64EncodeUnicode(JSON.stringify(buildSyncPayload(), null, 2));
+      const putBody = { message: 'Vorratsbuch aktualisiert – ' + new Date().toLocaleString('de-DE'), content: content, branch: cfg.branch };
+      if(sha) putBody.sha = sha;
+
+      const putResp = await fetch(apiUrl, {
+        method:'PUT',
+        headers:{ 'Authorization':'Bearer ' + cfg.token, 'Accept':'application/vnd.github+json', 'Content-Type':'application/json' },
+        body: JSON.stringify(putBody)
+      });
+      if(!putResp.ok){
+        const errData = await putResp.json().catch(function(){ return {}; });
+        throw new Error('Speichern fehlgeschlagen (' + putResp.status + '): ' + (errData.message || ''));
+      }
+      const zeit = new Date().toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+      setConnPill('connected', 'Verbunden — zuletzt gesichert ' + zeit);
+      if(!silent) showStatus('Erfolgreich synchronisiert (' + cfg.owner + '/' + cfg.repo + '/' + cfg.path + ').', 'ok');
+      return true;
+    }catch(err){
+      setConnPill('error', 'Sync fehlgeschlagen');
+      showStatus(erklaereFehler(err), 'err');
+      return false;
+    }
+  }
+
+  // Debounce: mehrere schnelle Änderungen lösen nur einen Push aus,
+  // statt bei jedem einzelnen Klick sofort die GitHub-API zu belasten.
+  let autoSyncTimer = null;
+  function scheduleAutoSync(){
+    if(!connected) return;
+    if(autoSyncTimer) clearTimeout(autoSyncTimer);
+    setConnPill('busy', 'Änderung erkannt — synchronisiere gleich …');
+    autoSyncTimer = setTimeout(function(){ pushToGitHub(true); }, 1500);
+  }
+
+  // ---------------------------------------------------------
+  // Start
+  // ---------------------------------------------------------
+  const startConfig = loadConfig();
+  logVerlauf('system', '(gesamter Bestand)', 'App gestartet', 'Lokaler Ausgangsbestand geladen');
+  renderAll();
+
+  if (startConfig && startConfig.token) {
+    setTimeout(function() { document.getElementById('btn-gh-connect').click(); }, 300);
+  }
+})();
+</script>
+
+</body>
+</html>
